@@ -31,3 +31,13 @@
 - CI al abrir PR a `develop`: lint + unit + integración + auditoría deps.
 - Auto-deploy a **Staging** tras merge a `develop`.
 - Tag y Release al aprobar `release/*` → `main`. Monitoreo y rollback (hotfix).
+
+
+## Semana 2 – Seguridad y API en la nube (Google Maps)
+
+### Requisitos
+- Node 18+
+- Expo CLI
+
+### Variables de entorno
+Copiar `.env.example` a `.env` y completar:
