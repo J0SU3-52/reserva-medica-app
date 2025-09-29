@@ -1,22 +1,23 @@
-SECURITY.md# SECURITY
+# SECURITY
 
 ## Principios aplicados
-
-- Autenticación con Firebase (tokens de ID), todo tráfico por HTTPS.
-- Almacenamiento local seguro: Expo SecureStore (Keychain/Keystore).
-- Claves/API Keys fuera del repo (`.env`), uso de `EXPO_PUBLIC_*` solo para cliente.
-- Mínimos privilegios: la API Key de Google Maps restringida por plataforma y API.
+- Autenticación con Firebase (tokens de ID), todo tráfico por **HTTPS**.
+- Almacenamiento local seguro con **Expo SecureStore** (Keychain/Keystore nativo).
+- Claves/API Keys fuera del repo (`.env`), uso de variables `EXPO_PUBLIC_*` solo en cliente.
+- Principio de mínimos privilegios: la API Key de Google Maps restringida por plataforma y API.
+- Validación de entradas de usuario antes de guardarlas o enviarlas a servicios externos.
+- Manejo de errores sin exponer información sensible (ej. nunca mostrar stacktrace en UI).
 
 ## Amenazas y mitigaciones
-
 - **Fuga de tokens** → SecureStore + logout elimina token; no se loggea en consola.
-- **Claves en repositorio** → `.env` + `.gitignore`; rotación en GCP si hay exposición.
-- **Intercepción de tráfico** → HTTPS; rechazo de endpoints inseguros.
-- **Permisos de ubicación** → Solicitud explícita y manejo de denegación.
-- **Pérdida de dispositivo** → Token expira en backend de Firebase; revocación desde consola.
+- **Claves en repositorio** → `.env` + `.gitignore`; rotación inmediata en caso de exposición.
+- **Intercepción de tráfico** → HTTPS obligatorio; rechazo de endpoints inseguros.
+- **Permisos de ubicación** → Solicitud explícita y manejo de denegación en tiempo de ejecución.
+- **Pérdida de dispositivo** → Tokens expiran en Firebase; se pueden revocar desde consola.
+- **Dependencias inseguras** → auditoría con `npm audit` y actualización constante.
+- **Intentos de fuerza bruta** → Firebase aplica límites automáticos de reintentos y bloqueo temporal.
 
 ## Lineamientos
-
-- No subir `.env` ni capturas con claves.
-- Rotar claves si se comparten fuera del equipo.
-- Revisar permisos antes de release (Android/iOS).
+- Revisar permisos y configuraciones antes de cada release (Android/iOS).
+- Usar solo dependencias confiables y revisadas por el equipo.
+- Hacer PR con revisión obligatoria para validar que no se expongan claves ni datos sensibles.
