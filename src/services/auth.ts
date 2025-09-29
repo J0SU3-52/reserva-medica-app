@@ -1,4 +1,3 @@
-// src/services/auth.ts
 import { auth } from './firebase';
 import {
   signInWithEmailAndPassword,
@@ -6,14 +5,20 @@ import {
   signOut,
   onAuthStateChanged,
   User,
-  UserCredential,
 } from 'firebase/auth';
 
-export const login = (email: string, password: string): Promise<UserCredential> =>
-  signInWithEmailAndPassword(auth, email, password);
+// Quita TODOS los espacios (incluye invisibles), normaliza y pasa a minúsculas
+const cleanEmail = (s: string) =>
+  s
+    .normalize('NFKC')   // normaliza caracteres raros
+    .replace(/\s/g, '')  // elimina cualquier whitespace (incluye espacios de ancho cero)
+    .toLowerCase();
 
-export const register = (email: string, password: string): Promise<UserCredential> =>
-  createUserWithEmailAndPassword(auth, email, password);
+export const login = (email: string, password: string) =>
+  signInWithEmailAndPassword(auth, cleanEmail(email), password);
+
+export const register = (email: string, password: string) =>
+  createUserWithEmailAndPassword(auth, cleanEmail(email), password);
 
 export const logout = () => signOut(auth);
 
