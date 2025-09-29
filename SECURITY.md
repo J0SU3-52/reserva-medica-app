@@ -1,5 +1,3 @@
-SECURITY.md# SECURITY
-
 ## Principios aplicados
 
 - Autenticación con Firebase (tokens de ID), todo tráfico por HTTPS.
