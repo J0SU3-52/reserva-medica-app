@@ -1,6 +1,7 @@
-// src/services/auth.ts
 import { auth } from '../lib/firebase';
 import {
+  sendEmailVerification,
+  sendPasswordResetEmail,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   signOut,
@@ -23,7 +24,6 @@ export async function login(email: string, password: string) {
       code.includes('invalid-credential') ||
       code.includes('user-not-found')
     ) {
-      // Aquí sí devolvemos un mensaje normalizado para Login
       throw new Error('Credenciales inválidas');
     }
     throw new Error('No se pudo iniciar sesión');
@@ -36,12 +36,51 @@ export async function register(email: string, password: string): Promise<User> {
     await cred.user.getIdToken(true);
     return cred.user;
   } catch (e: any) {
-    // IMPORTANTE: no envolver el error; deja pasar el `code` de Firebase
-    if (e?.code) throw e;
-    const err = new Error('No se pudo crear la cuenta');
-    (err as any).code = 'unknown';
-    throw err;
+    const code = e?.code || '';
+    
+    if (code.includes('email-already-in-use')) {
+      throw new Error('El correo ya está registrado');
+    }
+    if (code.includes('weak-password')) {
+      throw new Error('La contraseña es muy débil');
+    }
+    if (code.includes('invalid-email')) {
+      throw new Error('Correo electrónico inválido');
+    }
+    
+    throw new Error('No se pudo crear la cuenta');
   }
+}
+
+export async function sendVerificationEmail(): Promise<void> {
+  const user = auth.currentUser;
+  if (!user) throw new Error('Usuario no autenticado');
+  
+  if (user.emailVerified) {
+    throw new Error('El email ya está verificado');
+  }
+  
+  await sendEmailVerification(user);
+}
+
+export function isEmailVerified(): boolean {
+  const user = auth.currentUser;
+  return user ? user.emailVerified : false;
+}
+
+export async function resendVerificationEmail(): Promise<void> {
+  const user = auth.currentUser;
+  if (!user) throw new Error('Usuario no autenticado');
+  
+  await sendEmailVerification(user);
+}
+
+export function getEmailVerificationStatus(): { verified: boolean; email: string | null } {
+  const user = auth.currentUser;
+  return {
+    verified: user?.emailVerified || false,
+    email: user?.email || null
+  };
 }
 
 export const logout = () => signOut(auth);
