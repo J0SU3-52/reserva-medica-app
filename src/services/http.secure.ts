@@ -1,37 +1,69 @@
-// src/services/http.secure.ts
-import axios, { AxiosHeaders, InternalAxiosRequestConfig } from 'axios';
+import axios from 'axios';
 import { auth } from '../lib/firebase';
 import { signOut } from 'firebase/auth';
+import { Platform } from 'react-native';
 
-export const httpSecure = axios.create({ timeout: 10000 });
+export const httpSecure = axios.create({ 
+  timeout: 15000,
+});
 
-httpSecure.interceptors.request.use(async (config: InternalAxiosRequestConfig) => {
+httpSecure.interceptors.request.use(async (config) => {
   const user = auth.currentUser;
   if (user) {
     const token = await user.getIdToken();
-    const headers =
-      config.headers instanceof AxiosHeaders ? config.headers : new AxiosHeaders(config.headers);
-    headers.set('Authorization', `Bearer ${token}`);
-    config.headers = headers;
+    config.headers.Authorization = `Bearer ${token}`;
+    
     if (__DEV__) {
-      const val = headers.get('Authorization');
-      console.log('[httpSecure] Authorization:', val ? String(val).slice(0, 22) + '…' : 'none');
+      console.log('[httpSecure] Token añadido');
     }
   }
+  
+  config.headers['X-Platform'] = Platform.OS;
+  config.headers['X-App-Version'] = '1.0.0';
+  
   return config;
 });
 
 httpSecure.interceptors.response.use(
-  (res) => res,
-  async (error) => {
-    // 👇 algunos 401 cross-origin no exponen response.status; toma fallback del request
-    const s = Number(error?.response?.status ?? error?.request?.status ?? 0);
-    if (s === 401 || s === 403) {
-      console.warn('[httpSecure] 401/403 → signOut()');
-      try { await signOut(auth); } catch {}
-    } else {
-      console.warn('[httpSecure] error no-auth:', s || error?.message);
+  (response) => {
+    if (response.headers['content-type'] && !response.headers['content-type'].includes('application/json')) {
+      throw new Error('Respuesta inválida del servidor');
     }
+    return response;
+  },
+  async (error) => {
+    const status = error?.response?.status;
+    
+    console.warn(`[httpSecure] Error ${status}:`, error.message);
+    
+    if (status === 401 || status === 403) {
+      console.warn('[httpSecure] Sesión expirada → signOut()');
+      try { 
+        await signOut(auth);
+      } catch (logoutError) {
+        console.error('[httpSecure] Error durante logout:', logoutError);
+      }
+      
+    }
+    
+    if (error.code === 'ECONNABORTED' || error.message.includes('timeout')) {
+      throw new Error('La solicitud tardó demasiado. Intente nuevamente.');
+    }
+    
+    if (error.message.includes('Network Error')) {
+      throw new Error('Error de conexión. Verifique su internet.');
+    }
+    
+    if (status >= 500) {
+      throw new Error('Error del servidor. Intente más tarde.');
+    }
+    
+    if (status >= 400 && status < 500) {
+      throw new Error('Solicitud incorrecta. Verifique los datos.');
+    }
+    
     return Promise.reject(error);
   }
 );
+
+export default httpSecure;
