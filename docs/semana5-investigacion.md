@@ -101,3 +101,11 @@
 El análisis realizado demuestra que la aplicación de prácticas de seguridad avanzada, cumplimiento normativo y DevOps moderno permite fortalecer significativamente la protección de datos en *Reserva Médica App.  
 Mediante autenticación multifactor, cifrado robusto, monitoreo activo y despliegues seguros, se asegura la confidencialidad, integridad y disponibilidad (CIA)** de la información.  
 Estas estrategias cumplen los estándares técnicos de seguridad y las exigencias legales internacionales, contribuyendo a un desarrollo confiable, escalable y alineado con las mejores prácticas de 2025.
+
+## Bibliografía
+
+- OWASP Foundation. (2023). Mobile Application Security Verification Standard (MASVS). OWASP. https://mas.owasp.org/  
+- Grassi, P. A., Richer, J. P., & Nadeau, E. M. (2020). NIST Special Publication 800-63B: Digital Identity Guidelines — Authentication and Lifecycle Management. National Institute of Standards and Technology. https://doi.org/10.6028/NIST.SP.800-63B  
+- Internet Engineering Task Force (IETF). (2018). RFC 8446: The Transport Layer Security (TLS) Protocol Version 1.3. https://datatracker.ietf.org/doc/html/rfc8446  
+- Google. (2024). Firebase Authentication Documentation. Google Cloud. https://firebase.google.com/docs/auth  
+- European Union. (2016). General Data Protection Regulation (GDPR) (EU) 2016/679. Official Journal of the European Union. https://eur-lex.europa.eu/eli/reg/2016/679/oj  
