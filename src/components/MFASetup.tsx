@@ -1,3 +1,4 @@
+// components/MFASetup.tsx - CORREGIDO
 import React, { useState } from 'react';
 import { 
   View, 
@@ -5,7 +6,8 @@ import {
   TextInput, 
   Alert, 
   StyleSheet, 
-  ActivityIndicator 
+  ActivityIndicator,
+  ScrollView 
 } from 'react-native';
 import { useMFA } from '../hooks/useMFA';
 import AppButton from './ui/AppButton';
@@ -17,35 +19,32 @@ interface MFASetupProps {
 }
 
 export const MFASetup: React.FC<MFASetupProps> = ({ onSuccess, onCancel }) => {
-  const [phoneNumber, setPhoneNumber] = useState('+16505553434');
+  const [phoneNumber, setPhoneNumber] = useState('+15005550000'); // Número de prueba por defecto
   const [verificationCode, setVerificationCode] = useState('');
   const [step, setStep] = useState<'input-phone' | 'verify-code'>('input-phone');
   
   const { 
-    setupMFA, 
     requestVerificationCode, 
+    setupMFA,
     isLoading, 
     error 
   } = useMFA();
 
-  console.log('🛠️ MFASetup renderizado, step:', step);
-
   const handleRequestCode = async () => {
-    console.log('🛠️ handleRequestCode llamado');
+    console.log('📱 Solicitando código para:', phoneNumber);
+    
     if (!phoneNumber.trim()) {
       Alert.alert('Error', 'Por favor ingresa tu número de teléfono');
       return;
     }
 
     try {
-      console.log('📱 Solicitando código para:', phoneNumber);
       await requestVerificationCode(phoneNumber);
       setStep('verify-code');
       
       Alert.alert(
-        '✅ Código Enviado (Modo Desarrollo)', 
-        `Simulación para: ${phoneNumber}\n\n` +
-        `🔑 Usa el código: 123456`,
+        '✅ Código Enviado', 
+        `Se ha enviado un código a ${phoneNumber}.\n\n🔑 Usa el código: 123456`,
         [{ text: 'OK' }]
       );
     } catch (err: any) {
@@ -55,19 +54,19 @@ export const MFASetup: React.FC<MFASetupProps> = ({ onSuccess, onCancel }) => {
   };
 
   const handleVerifyAndEnable = async () => {
-    console.log('🛠️ handleVerifyAndEnable llamado');
+    console.log('✅ Verificando código...');
+    
     if (!verificationCode.trim()) {
       Alert.alert('Error', 'Por favor ingresa el código de verificación');
       return;
     }
 
     try {
-      console.log('✅ Verificando código...');
       await setupMFA(phoneNumber, verificationCode);
       
       Alert.alert(
         '✅ MFA Habilitado', 
-        'MFA configurado exitosamente!',
+        'La autenticación de dos factores se ha configurado exitosamente.',
         [{ text: 'OK', onPress: onSuccess }]
       );
     } catch (err: any) {
@@ -76,38 +75,59 @@ export const MFASetup: React.FC<MFASetupProps> = ({ onSuccess, onCancel }) => {
     }
   };
 
+  // ✅ CORREGIDO: Función segura para cancelar
   const handleCancel = () => {
-    console.log('🛠️ handleCancel llamado');
-    onCancel?.();
+    if (onCancel) {
+      onCancel();
+    } else {
+      console.log('MFA setup cancelled');
+    }
+  };
+
+  // ✅ CORREGIDO: Función segura para éxito
+  const handleSuccess = () => {
+    if (onSuccess) {
+      onSuccess();
+    }
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>🔒 Configurar MFA (DEBUG)</Text>
-      <Text style={styles.debugInfo}>Componente renderizado correctamente</Text>
+    <ScrollView style={styles.container}>
+      <Text style={styles.title}>🔒 Configurar Verificación por Teléfono</Text>
+      <Text style={styles.description}>
+        Añade una capa extra de seguridad a tu cuenta. 
+        {__DEV__ && '\n\n🔧 MODO DESARROLLO: Usa el código 123456'}
+      </Text>
 
       {step === 'input-phone' && (
         <View style={styles.form}>
           <Text style={styles.label}>Número de Teléfono</Text>
+          <Text style={styles.note}>
+            Formato internacional: +1 234 567 8900
+            {__DEV__ && '\nNúmero de prueba: +15005550000'}
+          </Text>
           <TextInput
-            placeholder="+16505553434"
+            placeholder="+15005550000"
             value={phoneNumber}
             onChangeText={setPhoneNumber}
             style={styles.input}
             keyboardType="phone-pad"
+            autoComplete="tel"
           />
           
           <View style={styles.buttonRow}>
             <AppButton 
               title="Cancelar" 
               variant="secondary" 
-              onPress={handleCancel}
+              onPress={handleCancel} // ✅ Usamos la función segura
               disabled={isLoading}
+              style={{ flex: 1 }}
             />
             <AppButton 
               title={isLoading ? "Enviando..." : "Enviar Código"} 
               onPress={handleRequestCode}
               disabled={isLoading}
+              style={{ flex: 2 }}
             />
           </View>
         </View>
@@ -116,12 +136,17 @@ export const MFASetup: React.FC<MFASetupProps> = ({ onSuccess, onCancel }) => {
       {step === 'verify-code' && (
         <View style={styles.form}>
           <Text style={styles.label}>Código de Verificación</Text>
+          <Text style={styles.note}>
+            Ingresa el código de 6 dígitos enviado a {phoneNumber}
+            {__DEV__ && '\nCódigo de prueba: 123456'}
+          </Text>
           <TextInput
             placeholder="123456"
             value={verificationCode}
             onChangeText={setVerificationCode}
             style={styles.input}
             keyboardType="number-pad"
+            maxLength={6}
           />
           
           <View style={styles.buttonRow}>
@@ -130,23 +155,39 @@ export const MFASetup: React.FC<MFASetupProps> = ({ onSuccess, onCancel }) => {
               variant="secondary" 
               onPress={() => setStep('input-phone')}
               disabled={isLoading}
+              style={{ flex: 1 }}
             />
             <AppButton 
               title={isLoading ? "Verificando..." : "Habilitar MFA"} 
               onPress={handleVerifyAndEnable}
               disabled={isLoading}
+              style={{ flex: 2 }}
             />
           </View>
+
+          <Text style={styles.resendNote}>
+            ¿No recibiste el código? {' '}
+            <Text 
+              style={styles.resendLink} 
+              onPress={handleRequestCode}
+            >
+              Reenviar código
+            </Text>
+          </Text>
         </View>
+      )}
+
+      {error && (
+        <Text style={styles.errorText}>{error}</Text>
       )}
 
       {isLoading && (
         <View style={styles.loading}>
           <ActivityIndicator size="small" color={colors.primary} />
-          <Text>Cargando...</Text>
+          <Text style={styles.loadingText}>Procesando...</Text>
         </View>
       )}
-    </View>
+    </ScrollView>
   );
 };
 
@@ -155,46 +196,74 @@ const styles = StyleSheet.create({
     padding: 20,
     backgroundColor: colors.card,
     borderRadius: radius,
-    borderWidth: 2,
-    borderColor: '#4CAF50',
     ...shadow,
   },
   title: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: 'bold',
     color: colors.text,
     marginBottom: 8,
+    textAlign: 'center',
   },
-  debugInfo: {
-    fontSize: 12,
-    color: '#4CAF50',
-    fontStyle: 'italic',
-    marginBottom: 16,
+  description: {
+    fontSize: 14,
+    color: colors.muted,
+    marginBottom: 20,
+    textAlign: 'center',
+    lineHeight: 20,
   },
   form: {
-    gap: 12,
+    gap: 16,
   },
   label: {
     fontSize: 16,
     fontWeight: '600',
     color: colors.text,
   },
+  note: {
+    fontSize: 12,
+    color: colors.muted,
+    fontStyle: 'italic',
+    lineHeight: 16,
+  },
   input: {
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: radius,
-    padding: 12,
+    padding: 16,
     fontSize: 16,
     backgroundColor: '#fff',
   },
   buttonRow: {
     flexDirection: 'row',
-    gap: 8,
+    gap: 12,
+    marginTop: 8,
+  },
+  resendNote: {
+    fontSize: 14,
+    color: colors.muted,
+    textAlign: 'center',
+    marginTop: 16,
+  },
+  resendLink: {
+    color: colors.primary,
+    fontWeight: '600',
+  },
+  errorText: {
+    color: colors.danger,
+    fontSize: 14,
+    textAlign: 'center',
+    marginTop: 12,
   },
   loading: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     gap: 8,
-    marginTop: 12,
+    marginTop: 16,
+  },
+  loadingText: {
+    fontSize: 14,
+    color: colors.muted,
   },
 });
