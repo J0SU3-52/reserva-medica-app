@@ -31,8 +31,6 @@ yarn-error.*
 *.pem
 
 # local env files
-# Env
-.env
 .env*.local
 .env.*        
 *.env         
@@ -46,3 +44,4 @@ yarn-error.*
 /ios
 /android
 ".env" 
+.vercel
