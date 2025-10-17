@@ -1,192 +1,103 @@
+# Fase de Investigación
 
-## Fase de investigacion 
+## 1. Modelado de amenazas y seguridad por diseño
 
-Esta investigación presenta estrategias para fortalecer la seguridad, el cumplimiento normativo y las prácticas DevOps modernas en una aplicación móvil empresarial. Se analizan modelos de amenazas, autenticación multifactor (MFA), cifrado de datos y protocolos de comunicación seguros. Además, se revisan lineamientos de privacidad (GDPR y CCPA) y prácticas de DevSecOps como SAST, SCA, DAST y despliegues progresivos. Finalmente, se propone un esquema de observabilidad y monitorización con herramientas actuales.  
-Las conclusiones servirán como base técnica para la implementación en el proyecto Reserva Médica App.
+- Se aplicaron los modelos STRIDE y DREAD para identificar posibles actores, activos vulnerables y vectores de ataque.  
+- Los principales riesgos detectados incluyen suplantación de identidad, interceptación de tráfico, fuga de información local y acceso indebido por privilegios excesivos.  
+- Se propone un enfoque de seguridad por diseño, donde la protección se integra desde la fase inicial del desarrollo.  
+- Se recomienda la adopción de frameworks como Zero Trust Architecture y RBAC (Role-Based Access Control) para garantizar que cada usuario tenga únicamente los permisos mínimos necesarios.  
+- Los principios de confidencialidad, integridad y disponibilidad (CIA) se aplicarán en todas las capas de la aplicación.
 
-## 1. Introducción
 
-El objetivo de esta investigación es establecer los fundamentos que permitirán integrar prácticas de seguridad avanzada, cumplimiento normativo y DevOps moderno en la app *Reserva Médica App*.  
-Esta aplicación, creada con Expo/React Native y Firebase, incluye módulos de autenticación, mapas, clima y gestión de usuarios. La meta es garantizar la confidencialidad, integridad y disponibilidad de los datos mediante técnicas empresariales y metodologías modernas.
 
+## 2. Autenticación multifactor (MFA) y gestión de sesiones
 
+- Se evaluaron las soluciones de autenticación en la nube más utilizadas: Firebase Auth, AWS Cognito y Azure AD B2C.  
+- Para el proyecto Reserva Médica App, se selecciona Firebase Auth por su compatibilidad con React Native y facilidad de integración.  
+- La aplicación implementará MFA combinando contraseña y código TOTP generado por aplicaciones como Google Authenticator.  
+- Se utilizará la biometría local (huella o rostro) como factor adicional de verificación.  
+- Las sesiones se gestionarán mediante tokens JWT con expiración corta, rotación periódica y revocación inmediata en caso de anomalías.  
+- Se aplicará autenticación adaptativa, aumentando los controles según el nivel de riesgo del inicio de sesión (ubicación, IP o dispositivo).
 
-## 2. Metodología de investigación
 
-Para elaborar este informe se consultaron fuentes oficiales y normas reconocidas, aplicando un enfoque sistemático basado en la comparación de herramientas y buenas prácticas.
 
-**Fuentes principales:** OWASP MASVS, NIST SP 800-63, GDPR, CCPA, Firebase Auth, AWS Cognito, Azure AD B2C, OpenTelemetry, Sentry, Cloudflare y Auth0.  
-**Criterios:** actualidad (2018–2025), aplicabilidad al entorno móvil y relevancia técnica.  
-**Proceso:** investigación temática → comparación → síntesis → aplicación práctica al proyecto.  
-**Limitaciones:** algunas técnicas, como el *certificate pinning*, requieren configuración nativa (EAS Build o prebuild).
+## 3. Seguridad de API y cifrado de datos
 
+- Todas las comunicaciones entre cliente y servidor se cifrarán con el protocolo TLS 1.3, garantizando confidencialidad e integridad.  
+- Se aplicará la técnica de certificate pinning para prevenir ataques *man-in-the-middle* y validar la autenticidad de los certificados.  
+- Se usará OAuth 2.0 con PKCE (Proof Key for Code Exchange) y soporte de OpenID Connect para autorización segura.  
+- Los secretos (API Keys, tokens) se almacenarán de forma segura en GitHub Secrets, y en el cliente móvil mediante **Expo SecureStore / Keychain.  
+- Los datos sensibles guardados localmente se cifrarán con el algoritmo AES-256, cumpliendo los estándares de seguridad empresarial.  
+- Se limitará el acceso a los endpoints mediante autenticación, validaciones y políticas CORS configuradas en el backend.
 
 
-## 3. Modelado de amenazas y seguridad por diseño
 
-Se aplican los modelos STRIDE y DREAD para identificar riesgos y priorizarlos.
+## 4. Cumplimiento legal y privacidad
 
-### Ejemplo de matriz STRIDE
+- Se revisaron las regulaciones aplicables al dominio del proyecto: GDPR (Unión Europea), CCPA/CPRA (California) y HIPAA (Estados Unidos), por tratar información médica.  
+- Se establecerán políticas de consentimiento explícito antes de recopilar o procesar datos personales.  
+- El usuario podrá exportar sus datos mediante un endpoint seguro (`/export-data`) y ejercer su derecho al olvido con la función (`/delete-account`).  
+- Se garantizará la minimización de datos, almacenando únicamente la información estrictamente necesaria para el servicio.  
+- La política de privacidad detallará cómo se procesan los datos, con transparencia y trazabilidad en cada tratamiento.  
+- Se registrarán los accesos y modificaciones en los datos, cumpliendo con los requisitos de auditoría y trazabilidad exigidos por HIPAA.
 
-| **Activo** | **Amenaza** | **Vector** | **Control propuesto** |
-|-------------|-------------|-------------|-----------------------|
-| Tokens de sesión | Spoofing / Replay | Reutilización de token robado | Rotación y expiración de tokens, almacenamiento cifrado (SecureStore) |
-| API /appointments | Tampering | Inyección o manipulación de datos | Validación en servidor, scopes OIDC, rate limiting |
-| Datos locales | Exposición de información | Acceso físico al dispositivo | Cifrado AES-256 antes de guardar |
-| Tráfico de red | Interceptación | MITM o certificados falsos | TLS 1.3 + *certificate pinning* (si es viable) |
 
 
+## 5. DevSecOps y CI/CD modernos
 
-## 4. Autenticación multifactor (MFA) y gestión de sesiones
+- Se integrará la seguridad en todo el ciclo de vida del desarrollo (shift-left security).  
+- El pipeline de CI/CD incluirá las siguientes etapas:  
+  - SAST (Static Application Security Testing): análisis estático del código con Semgrep o eslint-security.  
+  - SCA (Software Composition Analysis): revisión de vulnerabilidades en dependencias con OSV Scanner o npm audit.  
+  - DAST (Dynamic Application Security Testing): escaneo del entorno staging con OWASP ZAP.  
+  - Build automatizado:** mediante EAS Build con control de versiones.  
+  - Despliegues progresivos: estrategias *Canary o Blue-Green Deployment para evitar interrupciones en producción.  
+- Se utilizará infraestructura como código con herramientas compatibles (Terraform, GitHub Actions) para garantizar consistencia entre entornos.  
+- La inteligencia artificial podrá apoyar en la detección de patrones anómalos o fallos en pruebas automatizadas.
 
-La autenticación multifactor combina varios factores (contraseña, posesión y biometría) para aumentar la seguridad.  
-Se compararon tres servicios principales y se eligió el más compatible con el proyecto.
 
-### Comparativa de proveedores de MFA
 
-| **Criterio** | **Firebase Auth** | **AWS Cognito** | **Azure AD B2C** |
-|--------------|------------------|-----------------|------------------|
-| Factores disponibles | Password, SMS, TOTP (Authenticator) | Password, SMS/TOTP | Password, SMS/TOTP, integración empresarial |
-| Integración con React Native | Excelente (SDK Expo) | Buena | Compleja |
-| Gestión de sesión | Tokens con expiración y revocación | Amplia personalización | Enterprise |
-| Coste y mantenimiento | Bajo | Escalable en AWS | Alto, corporativo |
+## 6. Observabilidad y monitorización
 
-**Decisión:**  
-Se adopta Firebase Auth, implementando MFA con TOTP (Authenticator) como método principal y SMS como respaldo.  
-La biometría (Expo Local Authentication) se usará como verificación local adicional.  
+- La observabilidad permitirá detectar incidentes y analizar el comportamiento de la aplicación en tiempo real.  
+- Se recomienda integrar las siguientes herramientas:  
+  - Sentry: para registrar errores y fallos en la app móvil.  
+  - Firebase Analytics: para obtener métricas de uso y rendimiento.  
+  - Prometheus + Grafana: para monitorear la infraestructura, latencia y disponibilidad.  
+  - OpenTelemetry: para trazas distribuidas y correlación de eventos.  
+- Se configurarán alertas automáticas ante:  
+  - Aumento del crash rate (>1 % por hora).  
+  - Latencia elevada en inicio de sesión (>400 ms).  
+  - Picos de errores de autenticación o solicitudes fallidas.  
+- Los paneles de monitoreo permitirán responder rápidamente a incidentes y mantener la continuidad operativa del sistema.
 
-**Buenas prácticas de sesión:**  
-- Tokens de corta duración y refresh tokens rotables.  
-- Revocación inmediata de sesiones comprometidas.  
-- Registro de auditoría de eventos (login, MFA, revocaciones).  
-- Re-autenticación obligatoria en dispositivos nuevos o IPs sospechosas.
 
 
-## 5. Seguridad de API y cifrado de datos
+## 7. Herramientas de pruebas y análisis
 
-El proyecto requiere una comunicación segura entre cliente y servidor, así como protección de la información almacenada.
+- Para pruebas de seguridad y rendimiento se emplearán herramientas reconocidas a nivel empresarial:  
+  - OWASP ZAP y Burp Suite para pruebas de penetración (*pentesting*).  
+  - JMeter y k6 para pruebas de carga y estrés.  
+  - OWASP MASVS como guía de cumplimiento de seguridad en apps móviles.  
+- Se aplicarán pruebas automatizadas de cumplimiento normativo para validar conformidad con GDPR y HIPAA.  
+- Los resultados esperados son:  
+  - 0 vulnerabilidades críticas detectadas.  
+  - Cumplimiento ≥ 90 % en privacidad y seguridad.  
+  - Latencia media inferior a 400 ms en 100 RPS (peticiones por segundo).
 
-**Recomendaciones principales:**
-- Usar OAuth 2.0 + PKCE para autorización segura.  
-- Forzar TLS 1.3 en todas las comunicaciones.  
-- Implementar *certificate pinning* si se migra a EAS Build.  
-- Guardar secretos en GitHub Secrets y en el cliente con SecureStore.  
-- Cifrar datos locales sensibles con AES-256 antes de almacenarlos.
 
 
-## 6. Cumplimiento normativo y privacidad
+## Tendencias emergentes
 
-Las normativas GDPR (Unión Europea) y CCPA/CPRA (California) exigen el consentimiento informado, la portabilidad y el derecho al olvido.  
-La app debe permitir al usuario decidir sobre sus datos y ofrecer mecanismos para exportarlos o eliminarlos.
-
-### Cuadro 3 – Matriz de cumplimiento (extracto)
-
-| **Requisito** | **Control técnico** | **Control organizativo** | **Evidencia** |
-|----------------|--------------------|---------------------------|----------------|
-| Consentimiento | Modal + logs (versión, timestamp) | Política y registro del tratamiento | Capturas + tabla `consents` |
-| Portabilidad | `/export-data` (paquete JSON/CSV) | Procedimiento de solicitud | PR + prueba e2e |
-| Derecho al olvido | `/delete-account` | Proceso de borrado/retención | PR + acta de validación |
-
-
-
-## 7 DevSecOps y CI/CD modernos
-
-El enfoque DevSecOps busca integrar la seguridad en todo el ciclo de desarrollo.  
-Se propone un pipeline con validaciones automáticas y despliegues controlados.
-
-### Pipeline sugerido
-
-| **Etapa** | **Herramienta / práctica** | **Objetivo** |
-|------------|-----------------------------|---------------|
-| SAST (análisis estático) | Semgrep / eslint-security | Detectar vulnerabilidades de código. |
-| SCA (dependencias) | OSV Scanner / npm audit | Revisar librerías vulnerables. |
-| DAST (análisis dinámico) | OWASP ZAP | Escanear entorno staging. |
-| Build móvil | EAS Build | Generar versión por canal. |
-| Despliegue progresivo | Feature Flags / Canary | Liberar versiones de forma controlada. |
-
-
-
-## 8. Observabilidad y monitorización
-
-La observabilidad permite detectar errores en tiempo real y reaccionar ante incidentes.
-
-**Herramientas recomendadas:**  
-- Sentry (Expo SDK): captura de errores y rendimiento.  
-- Firebase Analytics: métricas de uso.  
-- OpenTelemetry + Prometheus + Grafana: trazas y dashboards.  
-- Alertas automáticas: picos de errores, latencia y fallos de autenticación.
-
-### Cuadro 5 – Indicadores de monitoreo
-
-| **Métrica** | **Umbral de alerta** | **Acción correctiva** |
-|--------------|----------------------|------------------------|
-| Crash rate de la app | > 1 % por hora | Rollback o revisión del canary |
-| Latencia p95 /login | > 400 ms | Escalar backend o DB |
-| Fallos de autenticación | > 10 en 10 min | Bloqueo temporal / revisión de logs |
-
-
-
-## 9 Pruebas y análisis de seguridad
-
-Las pruebas de seguridad y rendimiento garantizan que la aplicación sea confiable antes del despliegue final.
-
-### Tipos de prueba y herramientas
-
-| **Tipo de prueba** | **Herramienta** | **Objetivo** | **Criterio de éxito** |
-|---------------------|-----------------|---------------|------------------------|
-| Pentesting / DAST | OWASP ZAP, Burp Suite | Identificar vulnerabilidades OWASP Top 10 | 0 vulnerabilidades críticas |
-| Rendimiento | JMeter / k6 | Evaluar escalabilidad y latencia | p95 < 400 ms en 100 RPS |
-| Conformidad | OWASP MASVS, GDPR checklist | Validar cumplimiento normativo | Cumplimiento ≥ 90 % |
-
-
-
-## 10. Tendencias emergentes
-
-Las tendencias más recientes en seguridad móvil y DevOps incluyen:
-
-- Infraestructura inmutable: entornos efímeros para pruebas aisladas.  
-- IA en CI/CD: priorización automática de fallos y análisis predictivo.  
-- Ética en automatización: revisión humana en decisiones que afectan datos de usuario.
-
-
-
-## 11. Aplicación al proyecto Reserva Médica App
-
-El conocimiento obtenido se aplicará directamente a la app del equipo mediante las siguientes acciones:
-
-| **Área** | **Acción** | **Resultado esperado** |
-|-----------|-------------|-------------------------|
-| Identidad y sesiones | Activar MFA (TOTP) y revocación de tokens | Doble factor seguro |
-| Transporte y cifrado | Implementar TLS 1.3 y plan de pinning | Comunicación cifrada |
-| Secretos | Usar GitHub Secrets y SecureStore | Sin claves expuestas |
-| Pipeline | Configurar workflows (lint, test, SAST, DAST) | CI/CD automatizado |
-| Observabilidad | Integrar Sentry y Grafana | Alertas y métricas en tiempo real |
-| Cumplimiento | Modal de consentimiento, /export y /delete endpoints | Derechos GDPR/CCPA activos |
-
-
-
-## 12. Riesgos y mitigaciones
-
-| **Riesgo** | **Descripción** | **Mitigación** |
-|-------------|-----------------|----------------|
-| Falta de pinning | Expo requiere módulo nativo | Migrar a EAS Build |
-| Vulnerabilidad SMS MFA | Riesgo de SIM-swap | Usar TOTP o push |
-| Datos sin cifrar | Acceso físico al dispositivo | Cifrado AES-256 + SecureStore |
-| Tokens no rotados | Sesiones prolongadas | Expiración corta y revocación |
+- **Infraestructura inmutable:** cada despliegue genera entornos nuevos, reduciendo errores humanos.  
+- **Entornos efímeros (EaaS):** se crean y destruyen automáticamente para pruebas aisladas.  
+- **IA en CI/CD:** prioriza la corrección de vulnerabilidades y optimiza tiempos de despliegue.  
+- **Ética en automatización:** la inteligencia artificial debe aplicarse de forma responsable, garantizando equidad y protección de datos personales.
 
 
 
 ## Conclusiones
 
-El fortalecimiento de la Reserva Médica App se apoya en un enfoque integral: MFA, PKCE, TLS 1.3, cifrado local y DevSecOps automatizado.  
-Estas medidas garantizan la seguridad de la información, el cumplimiento normativo y un ciclo de despliegue estable y auditable.
-
----
-
-## Bibliografía
-
-- OWASP. (2023). *Mobile Application Security Verification Standard (MASVS)*. OWASP. Recuperado de https://mas.owasp.org/  
-- Grassi, P. A., Richer, J. P., Squire, S. K., Fenton, J. L., Nadeau, E. M., et al. (2020). *NIST Special Publication 800-63B: Digital Identity Guidelines — Authentication and Lifecycle Management*. National Institute of Standards and Technology. https://doi.org/10.6028/NIST.SP.800-63B  
-- IETF. (2015). *RFC 7636: Proof Key for Code Exchange by OAuth Public Clients*. Recuperado de https://datatracker.ietf.org/doc/html/rfc7636  
-- IETF. (2018). *RFC 8446: The Transport Layer Security (TLS) Protocol Version 1.3*. Recuperado de https://datatracker.ietf.org/doc/html/rfc8446  
-- NowSecure. (2022). *An Essential Guide to the OWASP Mobile App Security (MAS) Project*. NowSecure. Recuperado de https://www.nowsecure.com/wp-content/uploads/2022/10/d4434ca2-498a-4fb1-a0bb-74ec5599c165.pdf  
+El análisis realizado demuestra que la aplicación de prácticas de seguridad avanzada, cumplimiento normativo y DevOps moderno permite fortalecer significativamente la protección de datos en *Reserva Médica App.  
+Mediante autenticación multifactor, cifrado robusto, monitoreo activo y despliegues seguros, se asegura la confidencialidad, integridad y disponibilidad (CIA)** de la información.  
+Estas estrategias cumplen los estándares técnicos de seguridad y las exigencias legales internacionales, contribuyendo a un desarrollo confiable, escalable y alineado con las mejores prácticas de 2025.
