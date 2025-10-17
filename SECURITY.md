@@ -21,3 +21,13 @@
 - Revisar permisos y configuraciones antes de cada release (Android/iOS).
 - Usar solo dependencias confiables y revisadas por el equipo.
 - Hacer PR con revisión obligatoria para validar que no se expongan claves ni datos sensibles.
+
+## Gestión de secretos
+
+- **No hay claves** incrustadas en el cliente.
+- El cliente **sólo usa variables EXPO_PUBLIC_ mínimas (URL API, Firebase web config)**.
+- Los secretos reales (p. ej., OPENWEATHER_API_KEY, JWT, DB, Firebase Admin) viven como Environment Variables en Vercel y se acceden vía process.env en /api/*.
+- El consumo de OpenWeather se hace a través de /api/weather para ocultar la key.
+- Tokens del usuario se guardan cifrados en dispositivo con react-native-encrypted-storage (Keystore/Keychain, AES-256-GCM).
+- .env está ignorado por Git; se provee .env.example como plantilla.
+- Las claves de Firebase están restringidas por plataforma (Android/iOS/Web) desde la consola.
