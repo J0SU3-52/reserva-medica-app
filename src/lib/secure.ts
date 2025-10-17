@@ -1,10 +1,10 @@
 import { Platform } from "react-native";
 import * as SecureStore from "expo-secure-store";
 
-// Carga perezosa y tolerante
+
 let EncryptedStorage: any;
 try {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  
   EncryptedStorage = require("react-native-encrypted-storage");
 } catch (_) {
   EncryptedStorage = null;
@@ -29,7 +29,7 @@ export const secureData = {
   async set(key: string, value: unknown) {
     const payload = JSON.stringify(value);
     if (hasEncrypted) return EncryptedStorage.setItem(key, payload);
-    // Fallback temporal: dividir en chunks si son grandes, o usar solo SecureStore si es pequeño
+    
     return SecureStore.setItemAsync(key, payload);
   },
   async get<T = any>(key: string): Promise<T | null> {
@@ -44,6 +44,6 @@ export const secureData = {
   },
   async clearAllBusinessData() {
     if (hasEncrypted) return EncryptedStorage.clear();
-    // En fallback no hay “clear” global → borra claves que uses (o espera al Dev Client)
+    
   },
 };

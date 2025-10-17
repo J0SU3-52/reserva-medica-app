@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, View, Text } from 'react-native';
-import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import type { User } from 'firebase/auth';
 
@@ -58,9 +57,7 @@ export default function RootNavigator() {
   if (!ready) return <Loading />;
 
   return (
-    <NavigationContainer>
-      {/* key fuerza el remount completo del árbol */}
-      {user ? <AppNavigator key="app" /> : <AuthNavigator key="auth" />}
-    </NavigationContainer>
+
+    user ? <AppNavigator key="app" /> : <AuthNavigator key="auth" />
   );
 }
