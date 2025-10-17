@@ -1,7 +1,9 @@
+// src/services/http.secure.ts
 import axios from 'axios';
 import { auth } from '../lib/firebase';
 import { signOut } from 'firebase/auth';
 import { Platform } from 'react-native';
+import { clearToken } from '../storage/secure';
 
 export const httpSecure = axios.create({ 
   timeout: 15000,
@@ -37,13 +39,21 @@ httpSecure.interceptors.response.use(
     console.warn(`[httpSecure] Error ${status}:`, error.message);
     
     if (status === 401 || status === 403) {
-      console.warn('[httpSecure] Sesión expirada → signOut()');
+      console.warn('[httpSecure] Sesión expirada → logout()');
       try { 
-        await signOut(auth);
+        // Logout rápido sin bloquear la respuesta
+        setTimeout(async () => {
+          try {
+            await signOut(auth);
+            await clearToken();
+            console.log('✅ Auto-logout por error de auth');
+          } catch (logoutError) {
+            console.error('Error en auto-logout:', logoutError);
+          }
+        }, 100);
       } catch (logoutError) {
         console.error('[httpSecure] Error durante logout:', logoutError);
       }
-      
     }
     
     if (error.code === 'ECONNABORTED' || error.message.includes('timeout')) {
